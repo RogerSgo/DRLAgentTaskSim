@@ -232,7 +232,7 @@ class ConTask(gymnasium.Env):
   
         color1 = 'tab:blue'
         ax1.plot(x_interpolated, y_interpolated, color=color1, linewidth=15.0)
-        ax1.set_ylim(0.03, 0.07)
+        ax1.set_ylim(-0.05, 0.07)
         ax1.set_xlabel('X axis (m)', fontsize=11)
         ax1.set_ylabel('Y axis (m)', color=color1, fontsize=11)
         ax1.tick_params(axis='y', labelcolor=color1)
@@ -240,7 +240,7 @@ class ConTask(gymnasium.Env):
         ax2 = ax1.twinx()
         color2 = 'tab:red'
         ax2.plot(vx, vy, color=color2)
-        ax2.set_ylim(0.03, 0.07)
+        ax2.set_ylim(-0.04, 0.07)
         ax2.set_ylabel('End Effector', color=color2, fontsize=11)
         plt.title('Trajectory Tracking', fontsize=12)
         ax2.tick_params(axis='y', labelcolor=color2)
