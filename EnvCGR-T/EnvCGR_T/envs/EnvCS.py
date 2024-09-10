@@ -3,6 +3,7 @@ import sys
 import cv2 as cv
 import gymnasium
 import numpy as np
+import pandas as pd
 import sim
 import time
 import random
@@ -69,13 +70,14 @@ class ConTask(gymnasium.Env):
         self.obs = self._get_obs()   # Imagenes
         c, t, x, y = self.proc_img(self.obs) 
         # RECOMPENSAS y PENALIZACIONES
-        rc = self.compute_reward(action, op)
-        self.reward = rc
+        rt, rdc, rda, rgc, rat, rft, td = self.compute_reward(action)
+        self.reward = rt
+        #self.g_signal(rt, rdc, rda, rgc, rat, rft, td, self.step_counter)
         print(f'--- RECOMPENSA TOTAL: {self.reward:.3f} --- ')    
-
-        if c[0]<20 or c[0]>30 or c[1]>130 or c[1]<20:   # Reinicio cuando se llega a terminacion de estado
+        # REINICIOS
+        if c[0]<20 or c[0]>30 or c[1]>130 or c[1]<20 or rft==10:   # 1 Fuera de limite 
             self.terminated = True
-            print(' --- REINICIO --- ')            
+            print(' --- ESTADO TERMINADO --- ')
         #self.mov_tray(self.step_counter)   # desplazar la trayectoria      
         return self.obs, self.reward, self.terminated, self.truncated, self.info
     
@@ -199,10 +201,10 @@ class ConTask(gymnasium.Env):
             if step % 10 == 0:
                 
                 sim.simxSetObjectPosition(self.clientID, self.objetivo, -1, [0.625+v, 0.025+v, 0], sim.simx_opmode_blocking)
-        
+    
     def med_dist(self):
         """
-            Medir la distancia entre el Efector final y el punto final de la trayectoria
+            Medir la distancia entre el Efector final y el punto inicial/final de la trayectoria
             Retorno:
                 Distancia[metros]
         """
@@ -248,6 +250,33 @@ class ConTask(gymnasium.Env):
         
         ax1.grid(color='grey', ls = '-.', lw = 0.25)
         plt.show()
+        
+    def g_signal(self, rt, rdc, rda, rgc, rat, rft, td, sc):
+        self.obs = self._get_obs()
+        c, t, x, y = self.proc_img(self.obs)   # Datos de imagen de entrada
+        oe = self.get_orientacion(self.target)[2]   # Orientacion efector final
+        v1 = []
+        v2 = []
+        v3 = []
+        v4 = []
+        v5 = []
+        v6 = []
+        v7 = []
+        v8 = []
+        v9 = []
+        for i in range(10000):
+            v1.append(np.array(rt))
+            v2.append(np.array(rdc))   #
+            v3.append(np.array(rda))
+            v4.append(np.array(rgc))
+            v5.append(np.array(rat))
+            v6.append(np.array(rft))
+            #v7.append(np.array(t))
+            #v8.append(np.array(oe))
+            v9.append(np.array(sc))
+            
+        df = pd.DataFrame({'rt': v1, 'rdc': v2, 'rda': v3, 'rgc': v4, 'rat': v5, 'rft': v6, 'num_st': v9})
+        df.to_excel('Datos_DRL_train.xlsx', index=False, float_format='%.3f')
                
         
     def control_ef(self, accion):
@@ -272,32 +301,34 @@ class ConTask(gymnasium.Env):
         
     def _get_info(self): # verificar
         """
-            Medir distancia recorrida por el efector final.
+            Medir distancia por el efector final.
         """
-        cal_dis, d, = self.med_dist()
+        dist_i, dist_f, = self.med_dist()
         return {
-            'info' : cal_dis
+            'info' : dist_f
         }  
        
     
-    def compute_reward(self, accion, op):
+    def compute_reward(self, accion):
         """
-            Funcion de recompensa para seguimiento de trayectoria aleatoria en plano XY.
-            Elementos: Accion, posicion, angulo de orientacion.
-            Orientacion: Grados
+            Funcion de recompensa para seguimiento de trayectorias en plano XY.
+            Entrada: Accion.
+            Retorno
+                TotalReward, Reset 2
         """
+        self.obs = self._get_obs()
         c, t, x, y = self.proc_img(self.obs)   # Datos de imagen de entrada
-        di, df = self.med_dist()   # Medicion distancia desde el inicio o final trayectoria
+        di, df = self.med_dist()
         oa = self.get_orientacion(self.target)   # Orientacion actual efector final 0.025
         print(f"Angulos: Trayectoria Detectada: {t:.3f}, Efector Final: {oa[2]:.3f}")   
         cy = abs(c[1] - 75) / 75   # Calcular el costo hacia el centro y
-        rt = math.exp(-2.25 * cy)   # Recompensa 1 por distancia al centro
-        rc = 0.25 * ((180 - abs(t*(-1) - oa[2]))/180)   # Recompensa 2 por Correccion de giro
-        dg = 1.0 if t > 0.0 else -1.0   # Dirección del giro (derecha(1), izquierda(-1))
-        rg = 2 * accion[2] * dg * (-1)   # Recompensa 3 de giro en la dirección correcta
-        ra = 0.25 * np.linalg.norm(accion[0] + accion[1] + accion[2])   # Recompensa 4 por accion de movimiento
-        re = 10.0 if df < 0.025 else 0.0   # Recompensa 5 por llegar a final de trayectoria
-        self.recompensa_total = rt + rc + rg + ra + re  # funciona
-        print(f"RT: {rt:.3f}, RC: {rc:.3f}, RG: {rg:.3f}, RA: {ra:.3f}, RF: {re:.3f}") 
+        rdc = math.exp(-2.25 * cy)   # R1 por distancia al centro
+        rda = 0.25 * ((180 - abs(t*(-1) - oa[2]))/180)   # R2 por Correccion de giro
+        dg = 1.0 if t > 0.0 else -1.0   # Dirección del giro (derecha(+1), izquierda(-1))
+        rgc = 2 * accion[2] * dg * (-1)   # R3 de giro en la dirección correcta
+        rat = 0.25 * np.linalg.norm(accion[0] + accion[1] + accion[2])   # R4 por accion de movimiento
+        rft = 10.0 if df < 0.025 else 0.0   # R5 por llegar a final de trayectoria
+        self.recompensa_total = rdc + rda + rgc + rat + rft  # RTotal
+        print(f"Rdc: {rdc:.3f}, Rda: {rda:.3f}, Rgc: {rgc:.3f}, Rat: {rat:.3f}, Rft: {rft:.3f}") 
         
-        return self.recompensa_total
+        return self.recompensa_total, rdc, rda, rgc, rat, rft, t*(-1) 
