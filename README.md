@@ -19,6 +19,7 @@ The Robotic Manipulator executes the task of tracking trajectories located withi
 - Trained model with 10000 episodes (best_model.zip).
 <h2> Procedure </h2>
 
+- The CoppeliaSIm file Entorno_MRR_DRL_IK.ttt is used for training and inference of the DRL model.
 - Train: Open, modify parameters of the file TrainingAgentDRL.ipynb as the user sees fit and run training scene in CoppeliaSim.
 - Inference: Open the file InferenciaAgenteDRL.ipynb, load the previously trained model and run to evaluate the behavior of the trained agent.
 <h2> Multimedia content </h2>
