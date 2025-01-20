@@ -1,6 +1,6 @@
 <h1> Task DRL: Trayectory Tracking </h1>
 
-![Zona de trabajo](https://github.com/RogerSgo/DRL-Sim-Reach-Target/blob/main/Simulacion/Screenshot%202023-08-29%20084120.png)
+![Zona de trabajo]([https://github.com/RogerSgo/DRL-Sim-Reach-Target/blob/main/Simulacion/Screenshot%202023-08-29%20084120.png](https://github.com/RogerSgo/DRLAgentTaskSim/blob/main/Informative_Image.png))
 <h2> Description </h2>
 
 The Robotic Manipulator executes the task of tracking trajectories located within a work zone of the CoppeliaSim simulation scene using a Deep Reinforcement Learning based control approach.
