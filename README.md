@@ -19,5 +19,8 @@ The Robotic Manipulator executes the task of tracking trajectories located withi
 - Trained model with 10000 episodes (best_model.zip).
 <h2> Procedure </h2>
 
-- Entrenamiento: Abrir y ejecutar escena de ReachObjetive-Train-Test-FC.ipynb de Entrenamiento
-- Evaluación: Abrir y ejecutar escena de EvaluarModelosDRL.ipynb de Evaluacion.
+- Train: Open, modify parameters of the file TrainingAgentDRL.ipynb as the user sees fit and run training scene in CoppeliaSim.
+- Inference: Open the file InferenciaAgenteDRL.ipynb, load the previously trained model and run to evaluate the behavior of the trained agent.
+<h2> Multimedia content </h2>
+
+Youtube link of the model inference: https://www.youtube.com/watch?v=n-YulJUdDHg
